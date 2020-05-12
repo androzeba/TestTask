@@ -20,39 +20,6 @@ public class ShipFilterParam implements Serializable {
     private ShipType shipType;
     private Boolean isUsed;
 
-    public ShipFilterParam() {}
-
-    public ShipFilterParam(Integer pageNumber,
-                           Integer pageSize,
-                           String order,
-                           Long after,
-                           Long before,
-                           Double minSpeed,
-                           Double maxSpeed,
-                           Integer minCrewSize,
-                           Integer maxCrewSize,
-                           Double minRating,
-                           Double maxRating,
-                           String name,
-                           String planet,
-                           ShipType shipType,
-                           Boolean isUsed) {
-        this.pageNumber = pageNumber;
-        this.pageSize = pageSize;
-        this.order = order;
-        this.after = after;
-        this.before = before;
-        this.minSpeed = minSpeed;
-        this.maxSpeed = maxSpeed;
-        this.minCrewSize = minCrewSize;
-        this.maxCrewSize = maxCrewSize;
-        this.minRating = minRating;
-        this.maxRating = maxRating;
-        this.name = name;
-        this.planet = planet;
-        this.shipType = shipType;
-        this.isUsed = isUsed;
-    }
 
     public Integer getPageNumber() {
         return pageNumber;

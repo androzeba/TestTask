@@ -2,7 +2,6 @@ package com.space.controller;
 
 import com.space.model.Ship;
 import com.space.model.ShipFilterParam;
-import com.space.model.ShipType;
 import com.space.service.ShipService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -23,126 +22,28 @@ public class ShipController {
 
     @Autowired
     private ShipService shipService;
-
-    private Integer count = 0;
-
-    public void setCount(Integer count) {
-        this.count = count;
-    }
-
-    public Integer getCount() {
-        return count;
-    }
+    
 
     @GetMapping("/ships")
     public ResponseEntity<List<Ship>> getAllShips(
-            @RequestParam(name = "pageNumber", required = false) Integer pageNumber,
-            @RequestParam(name = "pageSize", required = false) Integer pageSize,
-            @RequestParam(name = "order", required = false) String order,
-            @RequestParam(name = "name", required = false) String name,
-            @RequestParam(name = "planet", required = false) String planet,
-            @RequestParam(name = "shipType", required = false) ShipType shipType,
-            @RequestParam(name = "after", required = false) Long after,
-            @RequestParam(name = "before", required = false) Long before,
             @RequestParam(name = "isUsed", required = false) Boolean isUsed,
-            @RequestParam(name = "minSpeed", required = false) Double minSpeed,
-            @RequestParam(name = "maxSpeed", required = false) Double maxSpeed,
-            @RequestParam(name = "minCrewSize", required = false) Integer minCrewSize,
-            @RequestParam(name = "maxCrewSize", required = false) Integer maxCrewSize,
-            @RequestParam(name = "minRating", required = false) Double minRating,
-            @RequestParam(name = "maxRating", required = false) Double maxRating
+            @ModelAttribute("shipFilterParam") ShipFilterParam shipFilterParam
             ) {
-        String sortOrder;
-        if (pageNumber == null) pageNumber = 0;
-        if (pageSize == null) pageSize = 3;
-        if (order == null || order.equals("")) {
-            sortOrder = ShipOrder.ID.getFieldName();
-        }
-        else {
-            sortOrder = ShipOrder.valueOf(order).getFieldName();
-        }
-        if (!Objects.nonNull(minSpeed)) minSpeed = 0.01;
-        if (!Objects.nonNull(maxSpeed)) maxSpeed = 0.99;
-        if (!Objects.nonNull(minCrewSize)) minCrewSize = 1;
-        if (!Objects.nonNull(maxCrewSize)) maxCrewSize = 9999;
-        if (!Objects.nonNull(minRating)) minRating = 0.0;
-        if (!Objects.nonNull(maxRating)) maxRating = Double.MAX_VALUE;
-        if (!Objects.nonNull(after)) after = Date.valueOf("2800-01-01").getTime();
-        if (!Objects.nonNull(before)) before = Date.valueOf("3020-01-01").getTime();
-        ShipFilterParam shipFilterParam = new ShipFilterParam(
-                pageNumber,
-                pageSize,
-                sortOrder,
-                after,
-                before,
-                minSpeed,
-                maxSpeed,
-                minCrewSize,
-                maxCrewSize,
-                minRating,
-                maxRating,
-                name,
-                planet,
-                shipType,
-                isUsed);
+        shipFilterParam.setUsed(isUsed);
+        filterParamCorrection(shipFilterParam);
         Page<Ship> allShips = this.shipService.findAll(shipFilterParam);
         return new ResponseEntity<>(allShips.getContent(), HttpStatus.OK);
     }
 
     @GetMapping("/ships/count")
-    public ResponseEntity<Integer> getShipsCount(
-            @RequestParam(name = "pageNumber", required = false) Integer pageNumber,
-            @RequestParam(name = "pageSize", required = false) Integer pageSize,
-            @RequestParam(name = "order", required = false) String order,
-            @RequestParam(name = "name", required = false) String name,
-            @RequestParam(name = "planet", required = false) String planet,
-            @RequestParam(name = "shipType", required = false) ShipType shipType,
-            @RequestParam(name = "after", required = false) Long after,
-            @RequestParam(name = "before", required = false) Long before,
+        public ResponseEntity<Integer> getShipsCount(
             @RequestParam(name = "isUsed", required = false) Boolean isUsed,
-            @RequestParam(name = "minSpeed", required = false) Double minSpeed,
-            @RequestParam(name = "maxSpeed", required = false) Double maxSpeed,
-            @RequestParam(name = "minCrewSize", required = false) Integer minCrewSize,
-            @RequestParam(name = "maxCrewSize", required = false) Integer maxCrewSize,
-            @RequestParam(name = "minRating", required = false) Double minRating,
-            @RequestParam(name = "maxRating", required = false) Double maxRating
+            @ModelAttribute ("shipFilterParam") ShipFilterParam shipFilterParam
     ) {
-        String sortOrder;
-        if (pageNumber == null) pageNumber = 0;
-        if (pageSize == null) pageSize = 3;
-        if (order == null || order.equals("")) {
-            sortOrder = ShipOrder.ID.getFieldName();
-        }
-        else {
-            sortOrder = ShipOrder.valueOf(order).getFieldName();
-        }
-        if (!Objects.nonNull(minSpeed)) minSpeed = 0.01;
-        if (!Objects.nonNull(maxSpeed)) maxSpeed = 0.99;
-        if (!Objects.nonNull(minCrewSize)) minCrewSize = 1;
-        if (!Objects.nonNull(maxCrewSize)) maxCrewSize = 9999;
-        if (!Objects.nonNull(minRating)) minRating = 0.0;
-        if (!Objects.nonNull(maxRating)) maxRating = Double.MAX_VALUE;
-        if (!Objects.nonNull(after)) after = Date.valueOf("2800-01-01").getTime();
-        if (!Objects.nonNull(before)) before = Date.valueOf("3020-01-01").getTime();
-        ShipFilterParam shipFilterParam = new ShipFilterParam(
-                pageNumber,
-                pageSize,
-                sortOrder,
-                after,
-                before,
-                minSpeed,
-                maxSpeed,
-                minCrewSize,
-                maxCrewSize,
-                minRating,
-                maxRating,
-                name,
-                planet,
-                shipType,
-                isUsed);
+        shipFilterParam.setUsed(isUsed);
+        filterParamCorrection(shipFilterParam);
         Page<Ship> allShips = this.shipService.findAll(shipFilterParam);
-        setCount(Math.toIntExact(allShips.getTotalElements()));
-        return new ResponseEntity<>(getCount(), HttpStatus.OK);
+        return new ResponseEntity<>(Math.toIntExact(allShips.getTotalElements()), HttpStatus.OK);
     }
 
     @GetMapping("/ships/{id}")
@@ -236,9 +137,7 @@ public class ShipController {
         }
     }
 
-
-
-    Double calculateRating(Ship ship) {
+    private Double calculateRating(Ship ship) {
         Double rating;
         double k;
         if (ship.getUsed())  k = 0.5; else k = 1.0;
@@ -248,6 +147,25 @@ public class ShipController {
         int prodYear = now.get(Calendar.YEAR);
         rating = (80 * ship.getSpeed() * k) / (currentYear - prodYear + 1);
         return Math.round(rating * 100) / 100.0;
+    }
+
+    private void filterParamCorrection(ShipFilterParam shipFilterParam) {
+        if (shipFilterParam.getPageNumber() == null) shipFilterParam.setPageNumber(0);
+        if (shipFilterParam.getPageSize() == null) shipFilterParam.setPageSize(3);
+        if (shipFilterParam.getOrder() == null || shipFilterParam.getOrder().equals("")) {
+            shipFilterParam.setOrder(ShipOrder.ID.getFieldName());
+        }
+        else {
+            shipFilterParam.setOrder(ShipOrder.valueOf(shipFilterParam.getOrder()).getFieldName());
+        }
+        if (!Objects.nonNull(shipFilterParam.getMinSpeed())) shipFilterParam.setMinSpeed(0.01);
+        if (!Objects.nonNull(shipFilterParam.getMaxSpeed())) shipFilterParam.setMaxSpeed(0.99);
+        if (!Objects.nonNull(shipFilterParam.getMinCrewSize())) shipFilterParam.setMinCrewSize(1);
+        if (!Objects.nonNull(shipFilterParam.getMaxCrewSize())) shipFilterParam.setMaxCrewSize(9999);
+        if (!Objects.nonNull(shipFilterParam.getMinRating())) shipFilterParam.setMinRating(0.0);
+        if (!Objects.nonNull(shipFilterParam.getMaxRating())) shipFilterParam.setMaxRating(Double.MAX_VALUE);
+        if (!Objects.nonNull(shipFilterParam.getAfter())) shipFilterParam.setAfter(Date.valueOf("2800-01-01").getTime());
+        if (!Objects.nonNull(shipFilterParam.getBefore())) shipFilterParam.setBefore(Date.valueOf("3020-01-01").getTime());
     }
 
 
